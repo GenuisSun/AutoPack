@@ -1,0 +1,72 @@
+apply plugin: 'com.android.application'
+apply plugin: 'com.qizuang.plugin'
+apply from: '../_360jiagu/jiagu.gradle'
+
+android {
+    compileSdkVersion 29
+    buildToolsVersion "29.0.3"
+
+    defaultConfig {
+        applicationId "com.stc.autopack"
+        minSdkVersion 28
+        targetSdkVersion 29
+        versionCode VERSION_CODE as int
+        versionName VERSION_NAME
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+    signingConfigs {
+        keyConfig {
+            keyAlias KEY_MOBILE_ALIAS
+            keyPassword KEY_PASSWORD
+            storeFile file(KEY_FILE)
+            storePassword KEY_PASSWORD
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.keyConfig
+        }
+    }
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            def newName
+            newName = 'auto_pack_' + VERSION_NAME + '_' + variant.buildType.name + '.apk'
+            outputFileName = new File(newName)
+        }
+    }
+
+    /**
+     * 一键自动打包动态参数配置。
+     * 因不同项目路径不同，故以下几点设为动态参数传递{@link com.qizuang.plugin.Extension}
+     * 生成的渠道包方法和路径位置请参考{@link com.qizuang.plugin.PackagingProcesser}
+     *
+     */
+    packagingConfig {
+        //360加固账号
+        ACCOUNT_360 = this.ACCOUNT_360
+        PASSWORD_360 = this.PASSWORD_360
+        //chanel渠道包生成文件夹命名为当前版本
+        CHANEL_VERSION_NAME = VERSION_NAME
+        //由于签名位置信息 前台难以保持一致 故不写死，做成可动态传递
+        //签名位置 需定位当前目录  不能为../不然会找不到签名文件
+        KEY_FILE = "./autopack_key.jks"
+        //签名 别名
+        KEY_MOBILE_ALIAS = this.KEY_MOBILE_ALIAS
+        //签名 密码 和别名密码  此处两个密码一致 故做一个字段
+        KEY_PASSWORD = this.KEY_PASSWORD
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+
+}

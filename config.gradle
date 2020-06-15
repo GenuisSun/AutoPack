@@ -1,0 +1,13 @@
+
+ext {
+    // 调试签名信息
+    KEY_MOBILE_ALIAS               = "keyalias"
+    KEY_FILE                       = "../autopack_key.jks"
+    KEY_PASSWORD                   = "123456"
+
+    //版本号
+    VERSION_CODE                   =1
+    VERSION_NAME                   ="1.0"
+    ACCOUNT_360                   ="360U1360096455"
+    PASSWORD_360                  ="589955Luting"
+}
