@@ -467,9 +467,9 @@ task downloadZipFile(type: Download) {
     src 'http://down.360safe.com/360Jiagu/360jiagubao_windows_64.zip'
     dest new File(jiaguConfig.download_jiagu_path, '360jiagubao.zip')
     overwrite false
-}
-downloadZipFile.doLast {
-    color_print "✈✈✈✈✈✈✈下载完成开始进行解压 请稍后。。。"
+    doLast {
+        color_print "✈✈✈✈✈✈✈下载完成开始进行解压 请稍后。。。"
+    }
 }
 task downloadAndUnzipFile(dependsOn: downloadZipFile, type: Copy) {
     from zipTree(downloadZipFile.dest)
@@ -503,6 +503,7 @@ def check() {
 //    folder = file(jiaguConfig.jiagu_root_path)
     if (folder.exists()) {
         color_print "✈✈✈✈✈✈✈360加固文件夹存在✈✈✈✈✈✈✈"
+//        tasks.getByName("_Test").dependsOn(ass)
     } else {
         color_print "✈✈✈✈✈✈✈360加固文件夹不存在，进行创建✈✈✈✈✈✈✈"
 //        folder.mkdirs()
