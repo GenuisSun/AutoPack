@@ -1,6 +1,4 @@
 import groovy.json.JsonSlurper
-import shadow.bundletool.com.android.tools.r8.code.Move
-
 apply plugin: 'de.undercouch.download'
 /**
  * Author: stc
@@ -82,6 +80,7 @@ def getSysyemJiaGuPath() {
 }
 //获取apk路径和文件名称
 project.afterEvaluate {
+//    tasks.getByName()
 //    project.android.applicationVariants.all { variant ->
 
 //        println("获取打包的apk路径:"+variant.name.toLowerCase())
@@ -464,26 +463,47 @@ task unzip(type: Copy) {
 }
 
 task downloadZipFile(type: Download) {
-    src 'http://down.360safe.com/360Jiagu/360jiagubao_windows_64.zip'
+    src getJiaGuZipUrlByOs()
     dest new File(jiaguConfig.download_jiagu_path, '360jiagubao.zip')
     overwrite false
     doLast {
-        color_print "✈✈✈✈✈✈✈下载完成开始进行解压 请稍后。。。"
+        color_print "✈✈✈✈✈✈✈360加固资源包下载完成 准备进行解压 请稍后。。。"
     }
 }
 task downloadAndUnzipFile(dependsOn: downloadZipFile, type: Copy) {
     from zipTree(downloadZipFile.dest)
     into jiaguConfig.download_jiagu_path
     doLast {
-        color_print "✈✈✈✈✈✈✈解压完成 移动临时加固文件夹到所需文件夹 请稍后。。。"
-
+        File folder = file(jiaguConfig.download_jiagu_path)
+        for (File f : folder.listFiles()) {
+//            if (f.isFile()) {
+                color_print "解压出的文件:" + f
+//            }
+        }
+        color_print "✈✈✈✈✈✈✈解压完成  准备将解压出来的jiagu文件夹复制到"+jiaguConfig.root_path+"文件夹下 请稍后。。。"
     }
 }
 task moveDownloadJiaGu(dependsOn: downloadAndUnzipFile, type: Copy) {
-    from jiaguConfig.download_jiagu_path+"/jiagu"
+    //下载的360加固zip解压出的jiagu文件家路径
+    def downnload_jiagu = jiaguConfig.download_jiagu_path+"/jiagu"
+    doFirst {
+        File folder = file(downnload_jiagu)
+        if(!folder.exists()){
+            File file1 = new File(jiaguConfig.download_jiagu_path)
+            if (file1.exists()){
+                file1.deleteDir()
+            }
+            File file2 = new File(jiaguConfig.jiagu_root_path)
+            if (file2.exists()){
+                file2.deleteDir()
+            }
+            throw new RuntimeException("没有在解压的文件夹中找到jiagu文件夹，请手动请去官网下载对应的资源包，解压到：" + jiaguConfig.root_path +"文件夹下")
+        }
+    }
+    from downnload_jiagu
     into jiaguConfig.jiagu_root_path
     doLast {
-        color_print "✈✈✈✈✈✈✈移动完成。。。"
+        color_print "✈✈✈✈✈✈✈复制完成。。。"
         File file1 = new File(jiaguConfig.download_jiagu_path)
         file1.deleteDir()
         color_print "✈✈✈✈✈✈✈删除下载的加固压缩包源文件"
@@ -514,16 +534,21 @@ def check() {
 }
 
 
-String getJiaguJarFilePathByOs() {
+def getJiaGuZipUrlByOs() {
+    def url
     String osName = org.gradle.internal.os.OperatingSystem.current().getName();
     String osVersion = org.gradle.internal.os.OperatingSystem.current().getVersion();
     color_print "*** $osName $osVersion was detected."
 
     if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
-        color_print("Linux")
+        url = rootProject.ext.URL_JIAGU_ZIP_360["linux"]
     } else if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-        color_print("Windows")
+        url =  rootProject.ext.URL_JIAGU_ZIP_360["windows"]
     } else if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
-        color_print("OSX")
+        url =  rootProject.ext.URL_JIAGU_ZIP_360["mac"]
+    }else {
+        throw new RuntimeException("不支持当前操作系统：" + osName )
     }
+    color_print "根据当前系统获得要下载360加固包的链接地址为："+url
+    return url
 }
