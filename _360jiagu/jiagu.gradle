@@ -1,15 +1,17 @@
+import groovy.json.JsonSlurper
+import shadow.bundletool.com.android.tools.r8.code.Move
+
+apply plugin: 'de.undercouch.download'
 /**
- *
- * 使用360加固版本 3.2.2.3 2020-03-16
- *
- * 如果出现,签名配置中没有匹配的签名,请使用命令行的方式单独导入签名信息.
- *
- * java -jar jiagu.jar  -importsign<keystore_path><keystore_password><alias><alias_password>
- *
- * 这有可能是360加固的BUG
- *
- * 如需配置win mac 外的其他平台，请下载先关360加固文件 解压之后:将`java`文件夹 放在 `jiagu/` 文件夹下，并重命名.
- * */
+ * Author: stc
+ * Date:   2020/6/14
+ *         ❤-- 使用360加固版本 3.2.2.3 2020-03-16 --❤
+ *         ❤-- 如果出现,签名配置中没有匹配的签名,请使用命令行的方式单独导入签名信息. --❤
+ *         ❤-- java -jar jiagu.jar  -importsign<keystore_path><keystore_password><alias><alias_password> --❤
+ *         ❤-- 这有可能是360加固的BUG --❤
+ *         ❤-- TODO 此文件 声明多个task是为了方便在执行流程中，更清晰的查阅到执行到那个任务 --❤
+ *         ❤-- TODO 如需配置win mac 外的其他平台，请下载先关360加固文件 解压之后:将`java`文件夹 放在 `jiagu/` 文件夹下，并重命名. --❤
+ **/
 
 //360加固文件所在的文件夹名字
 def folder_name = "_360jiagu"
@@ -17,62 +19,65 @@ def folder_name = "_360jiagu"
 def projectPath = getRootDir().getAbsolutePath()
 
 getRootProject().ext.jiaguConfig = [
+
         //360 账号 (必须)
-        "_360_user_name"  : project.ACCOUNT_360,
-        "_360_user_pw"    : project.PASSWORD_360,
+        "_360_user_name"     : project.ACCOUNT_360,
+        "_360_user_pw"       : project.PASSWORD_360,
 
         //签名文件配置, 使用空字符, 会自动赋值. (可选)
-        "keystorePath"    : '',
-        "keystorePwd"     : '',
-        "keystoreAlias"   : '',
-        "keystoreAliasPwd": '',
+        "keystorePath"       : '',
+        "keystorePwd"        : '',
+        "keystoreAlias"      : '',
+        "keystoreAliasPwd"   : '',
 
         //需要加固的APK路径, 如果不存在任务中断执行, 为空:自动根据Gradle配置获取路径 (可选)
-        "targetApkPath"   : "",
+        "targetApkPath"      : "",
 
         //自动查找`targetApkPath`时, 取名字中包含`likeApkName`字符串的路径, 如果有多个, 取第一个
-        "likeApkName"     : "",
+        "likeApkName"        : "",
 
         //文件所在的根目录
-        "root_path"       : projectPath + "/" + folder_name,
+        "root_path"          : projectPath + "/" + folder_name,
+        //首次下载360加固的临时存放目录
+        "download_jiagu_path": projectPath + "/" + folder_name + "/download",
 
         //360加固文件所在的根目录
-        "jiagu_root_path" : projectPath + "/" + folder_name + "/"+getSysyemJiaGuPath(),
-        "walle_root_path" : projectPath + "/" + folder_name + "/walle",
+        "jiagu_root_path"    : projectPath + "/" + folder_name + "/jiagu",
+        "walle_root_path"    : projectPath + "/" + folder_name + "/walle",
 
         //渠道文件信息路径
-        "channelList"     : projectPath + "/" + folder_name + "/walle/channel",
+        "channelList"        : projectPath + "/" + folder_name + "/walle/channel",
 
         //渠道分包后的APK文件名,为空:自动从Gradle脚本中获取 (可选)
-        "tmpApkName"      : "",
+        "tmpApkName"         : "",
 
         //最终生成zip包的文件名 (可选)
-        "zipFileName"     : "",
+        "zipFileName"        : "",
 
         //360加固jar文件路径
-        "jiaguJarPath"    : projectPath + "/" + folder_name + "/" + getSysyemJiaGuPath() + "/jiagu.jar",
+        "jiaguJarPath"       : projectPath + "/" + folder_name + "/jiagu/jiagu.jar",
         //walle分包jar文件路径
-        "walleJarPath"    : projectPath + "/" + folder_name + "/walle/walle-cli-all.jar",
+        "walleJarPath"       : projectPath + "/" + folder_name + "/walle/walle-cli-all.jar",
         //临时文件输出目录
-        "tmpOutput"       : projectPath + "/" + folder_name + "/output/tmp",
+        "tmpOutput"          : projectPath + "/" + folder_name + "/output/tmp",
         //zip文件输出目录
-        "zipOutput"       : projectPath + "/" + folder_name + "/output/zip",
+        "zipOutput"          : projectPath + "/" + folder_name + "/output/zip",
         //加固后文件输出目录
-        "jiaguOutput"     : projectPath + "/" + folder_name + "/output/jiagu",
+        "jiaguOutput"        : projectPath + "/" + folder_name + "/output/jiagu",
         //walle分包输出目录
-        "walleOutput"     : projectPath + "/" + folder_name + "/output/walle",
+        "walleOutput"        : projectPath + "/" + folder_name + "/output/walle",
 
 ]
 
-static def getSysyemJiaGuPath() {
+def getSysyemJiaGuPath() {
     def osName = System.getProperty("os.name").toLowerCase()
-    println "当前操作系统:" + osName
+    color_print "当前操作系统:" + osName
     if (osName.indexOf("mac") >= 0 && osName.indexOf("os") > 0) {
-        return "jiagu_mac"
+        return "jiagu_mac1"
     } else if (osName.indexOf("window") >= 0) {
-        return "jiagu_win"
+        return "jiagu_win1"
     } else {
-        throw new RuntimeException("当前操作系统:" + osName+ " not support,请集成相关系统的360加固文件")
+        throw new RuntimeException("当前操作系统:" + osName + " not support,请集成相关系统的360加固文件")
     }
 }
 //获取apk路径和文件名称
@@ -146,7 +151,7 @@ project.afterEvaluate {
 //    }
 }
 
-//进行登录
+// 进行登录
 task login(type: JavaExec, dependsOn: 'assembleRelease') {
     workingDir(jiaguConfig.jiagu_root_path)
     classpath(files(jiaguConfig.jiaguJarPath))
@@ -213,9 +218,9 @@ task zipChannel(type: Zip, dependsOn: walleApk) {
 
 task _360jiagu(dependsOn: zipChannel) {
     doLast {
-        println "加固结束:"
-        println("渠道包路径:" + jiaguConfig.walleOutput)
-        println("zip包路径:" + jiaguConfig.zipOutput)
+        color_print "加固结束:"
+        color_print("渠道包路径:" + jiaguConfig.walleOutput)
+        color_print("zip包路径:" + jiaguConfig.zipOutput)
     }
 }
 
@@ -224,8 +229,8 @@ login.doFirst {
     if (!targetFile.exists()) {
         throw new RuntimeException("加固文件不存在:" + targetFile.getAbsolutePath())
     } else {
-        println("开始加固:" + targetFile.getAbsolutePath())
-        println("输出zip路径:" + jiaguConfig.zipOutput)
+        color_print("开始加固:" + targetFile.getAbsolutePath())
+        color_print("输出zip路径:" + jiaguConfig.zipOutput)
     }
     //创建基础文件夹
     createFolder(jiaguConfig.walleOutput, true)
@@ -236,7 +241,8 @@ login.doFirst {
 login.doFirst {
     //初始化相关路径信息  签名信息
     project.android.applicationVariants.all { variant ->
-        println("当前打包方式：" + variant.name.toLowerCase())
+        //对应app/build.gradle文件声明 buildTypes 下声明的打包类型
+        color_print("打包方式：" + variant.name.toLowerCase())
         if (
         (jiaguConfig.likeApkName == "" && variant.name.toLowerCase().endsWith("release"))
                 || (jiaguConfig.likeApkName != "" && variant.name.toLowerCase().contains(jiaguConfig.likeApkName))
@@ -256,7 +262,7 @@ login.doFirst {
                 list.add(jiaguConfig.keystoreAlias)
                 list.add(jiaguConfig.keystoreAliasPwd)
 
-                println "使用签名:" + list
+                color_print "使用签名:" + list
 
                 setKeystore.setArgs(list)
             }
@@ -265,19 +271,19 @@ login.doFirst {
                 //自动配置目标文件路径, 和临时文件名
                 if (jiaguConfig.targetApkPath == "") {
                     jiaguConfig.targetApkPath = output.outputFile.getAbsolutePath()
-                    println "读取到目标apk路径:" + jiaguConfig.targetApkPath
+                    color_print "读取到目标apk路径:" + jiaguConfig.targetApkPath
                 }
 
                 if (jiaguConfig.tmpApkName == '') {
                     jiaguConfig.tmpApkName = output.outputFile.getName()
-                    println "临时文件名:" + jiaguConfig.tmpApkName
+                    color_print "临时文件名:" + jiaguConfig.tmpApkName
                 }
                 copyTmpApk.rename('(.+)', jiaguConfig.tmpApkName)
 
                 if (jiaguConfig.zipFileName == '') {
                     jiaguConfig.zipFileName = jiaguConfig.tmpApkName
                             .substring(0, jiaguConfig.tmpApkName.lastIndexOf('.')) + ".zip"
-                    println "zip文件名:" + jiaguConfig.zipFileName
+                    color_print "zip文件名:" + jiaguConfig.zipFileName
                 }
 
                 zipChannel.archiveName = jiaguConfig.zipFileName
@@ -322,18 +328,18 @@ def clearFolder(String path) {
         if (f.isDirectory()) {
             clearFolder(f.getAbsolutePath())
         } else if (f.isFile()) {
-            println "删除文件:" + f + " " + f.delete()
+            color_print "删除文件:" + f + " " + f.delete()
         }
     }
 }
 
-/**自动读取签名配置信息*/
+/**自动读取签名配置信息 因会出现获取不到签名，需手动导入的情况，故每次直接从gradle中声明的位置获取，此方法暂时废弃*/
 def readSigning() {
     def application = "com.android.application"
     def applicationPlugin = project.plugins.findPlugin(application)
     //applicationPlugin.extension
-    //println "插件:" + applicationPlugin
-    //println applicationPlugin.extension.signingConfigs[0]
+    //color_print "插件:" + applicationPlugin
+    //color_print applicationPlugin.extension.signingConfigs[0]
     def signingConfigs = applicationPlugin.extension.signingConfigs
 
     def signingMap = new HashMap<String, String>()
@@ -368,10 +374,155 @@ def readSigning() {
             signingMap.put("kp", it.keyPassword)
             signingMap.put("ka", it.keyAlias)
         }
-        println builder
+        color_print builder
     } else {
-        println "未找到签名配置信息"
+        color_print "未找到签名配置信息"
     }
 
     return signingMap
+}
+
+project.tasks.whenTaskAdded { Task theTask ->
+    if (theTask.name == 'assembleBeta') {
+        theTask.doLast {
+            _uploadApp()
+        }           // 编译完apk之后再执行自定义task
+    }
+}
+//上传prerelease包至蒲公英
+def _uploadApp() {
+    project.android.applicationVariants.all { variant ->
+        //对应app/build.gradle文件声明 buildTypes 下声明的打包类型
+        color_print("打包方式：" + variant.name.toLowerCase())
+//        if(tasks.getByName())
+        if (variant.name.toLowerCase().endsWith("beta")) {
+            variant.outputs.each { output ->
+                color_print "上传蒲公英---读取到目标apk路径:" + output.outputFile.getAbsolutePath()
+                File dir = new File(output.outputFile.getAbsolutePath())
+                if (!dir.exists()) {
+                    throw new RuntimeException("上传蒲公英---目标apk路径 not exists：" + dir.path)
+                }
+                uploadPGY(dir.path)
+            }
+        }
+    }
+
+}
+/*
+*上传apk到蒲公英
+*/
+
+private def uploadPGY(String filePath) {
+    color_print "uploadPGY filePath：" + filePath
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        executable = 'curl'
+        args = ['-F', "file=@${filePath}", '-F', "_api_key=${rootProject.ext.pgy["apiKey"]}", rootProject.ext.pgy["uploadUrl"]]
+        standardOutput = stdout
+    }
+    String output = stdout.toString()
+    def parsedJson = new JsonSlurper().parseText(output)
+    color_print "✈ ❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤上传成功❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ ✈"
+    color_print "App的名称：" + parsedJson.data.buildFileName
+    color_print "App版本号：" + parsedJson.data.buildVersion
+    color_print "App版本号：" + parsedJson.data.buildVersionNo
+    color_print "AppBuildVersion：" + parsedJson.data.buildBuildVersion
+    color_print "App包体积：" + parsedJson.data.buildFileSize
+    color_print "App短链接：https://www.pgyer.com/" + parsedJson.data.buildShortcutUrl
+    color_print "App下载页地址：https://www.pgyer.com/" + parsedJson.data.buildKey
+    color_print "App二维码地址：" + parsedJson.data.buildQRCodeURL
+    color_print "App上传时间：" + parsedJson.data.buildCreated
+    color_print "✈ ❤❤❤❤❤❤❤❤❤❤❤❤❤❤信息打印完毕❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ ✈"
+}
+
+/**
+ * 彩色日志打印
+ * printf("\033[字背景颜色;字体颜色m 字符串 \033[0m" );
+ * @param value
+ * @return
+ */
+def color_print(String value) {
+    printf "\033[1;32m%s\033[0m\n", value
+}
+
+
+// 解压缩第三方jar包到某目录
+task unzip(type: Copy) {
+
+    // 原始jar包文件
+    def zipFile = file(projectPath + "/" + folder_name + "/output/zip/auto_pack_1.0_release.zip")
+
+    // 解压缩目标目录
+    def outputDir = file(projectPath + "/" + folder_name + "/output/zip")
+
+    // 文件过滤，去除部分class。这里建议写精确点，因为可能存在名称相同或相近的文件。
+    FileTree jarTree = zipTree(zipFile)
+
+    // 从jar的目录树中输出到目标目录
+    from jarTree
+    into outputDir
+}
+
+task downloadZipFile(type: Download) {
+    src 'http://down.360safe.com/360Jiagu/360jiagubao_windows_64.zip'
+    dest new File(jiaguConfig.download_jiagu_path, '360jiagubao.zip')
+    overwrite false
+}
+downloadZipFile.doLast {
+    color_print "✈✈✈✈✈✈✈下载完成开始进行解压 请稍后。。。"
+}
+task downloadAndUnzipFile(dependsOn: downloadZipFile, type: Copy) {
+    from zipTree(downloadZipFile.dest)
+    into jiaguConfig.download_jiagu_path
+    doLast {
+        color_print "✈✈✈✈✈✈✈解压完成 移动临时加固文件夹到所需文件夹 请稍后。。。"
+
+    }
+}
+task moveDownloadJiaGu(dependsOn: downloadAndUnzipFile, type: Copy) {
+    from jiaguConfig.download_jiagu_path+"/jiagu"
+    into jiaguConfig.jiagu_root_path
+    doLast {
+        color_print "✈✈✈✈✈✈✈移动完成。。。"
+        File file1 = new File(jiaguConfig.download_jiagu_path)
+        file1.deleteDir()
+        color_print "✈✈✈✈✈✈✈删除下载的加固压缩包源文件"
+
+    }
+}
+
+task _Test {
+    check()
+}
+
+def check() {
+    color_print "✈✈✈✈✈✈✈开始检测360加固文件夹是否存在✈✈✈✈✈✈✈"
+    File folder = file(jiaguConfig.jiagu_root_path)
+//    clearFolder(jiaguConfig.jiagu_root_path)
+//    folder.delete()
+//    folder = file(jiaguConfig.jiagu_root_path)
+    if (folder.exists()) {
+        color_print "✈✈✈✈✈✈✈360加固文件夹存在✈✈✈✈✈✈✈"
+    } else {
+        color_print "✈✈✈✈✈✈✈360加固文件夹不存在，进行创建✈✈✈✈✈✈✈"
+//        folder.mkdirs()
+//        color_print "✈✈✈✈✈✈✈文件夹创建成功："+folder.path
+        color_print "✈✈✈✈✈✈✈开始执行下载加固压缩包 请稍后。。。"
+        tasks.getByName("_Test").dependsOn(moveDownloadJiaGu)
+    }
+}
+
+
+String getJiaguJarFilePathByOs() {
+    String osName = org.gradle.internal.os.OperatingSystem.current().getName();
+    String osVersion = org.gradle.internal.os.OperatingSystem.current().getVersion();
+    color_print "*** $osName $osVersion was detected."
+
+    if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
+        color_print("Linux")
+    } else if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+        color_print("Windows")
+    } else if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
+        color_print("OSX")
+    }
 }

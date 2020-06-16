@@ -16,12 +16,7 @@ gradlew
 /captures
 .externalNativeBuild
 .cxx
-_360jiagu/jiagu_win/.cache/
-_360jiagu/jiagu_win/tempAndroidManifest.xml
-_360jiagu/jiagu_win/jiagu.db
-_360jiagu/jiagu_mac/.cache/
-_360jiagu/jiagu_mac/tempAndroidManifest.xml
-_360jiagu/jiagu_mac/jiagu.db
+_360jiagu/jiagu/
 _360jiagu/output/
 buildSrc/auth_packaging/chanel/
 buildSrc/auth_packaging/jiagu_complete/

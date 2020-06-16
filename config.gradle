@@ -10,4 +10,7 @@ ext {
     VERSION_NAME                   ="1.0"
     ACCOUNT_360                   ="360U1360096455"
     PASSWORD_360                  ="589955Luting"
+    //蒲公英配置
+    pgy = [apiKey   : "1598c6d546afe087a297d4a5226ee3bd",
+           uploadUrl: "https://www.pgyer.com/apiv2/app/upload"]
 }
