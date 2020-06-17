@@ -115,6 +115,7 @@ task downloadZipFile( dependsOn: 'assembleRelease') {
 }
 //解压下载的加固包
 task unzipFile(dependsOn: downloadZipFile, type: Copy) {
+    //onlyIf属性进行条件判断，判断当前任务是否执行
     onlyIf { downloadZipFile.enabled }
     from zipTree(jiaguConfig.download_jiagu_zip_path)
     into jiaguConfig.download_jiagu_path
