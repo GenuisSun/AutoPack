@@ -16,8 +16,8 @@ gradlew
 /captures
 .externalNativeBuild
 .cxx
-_360jiagu/jiagu/
-_360jiagu/output/
+_autoPack/jiagu/
+_autoPack/output/
 buildSrc/auth_packaging/chanel/
 buildSrc/auth_packaging/jiagu_complete/
 

@@ -27,9 +27,9 @@ class PackagingProcesser extends DefaultTask {
     /**
      * 本地 加固jar资源文件存放路径===>>{Base}/{项目名}/auth_packaging/jiagu/
      */
-    def JIAGU_ROOT_PATH
-    def JIAGU_ROOT_PATH_WIN = "./_360jiagu/jiagu_win/jiagu.jar"
-    def JIAGU_ROOT_PATH_MAC = "./_360jiagu/jiagu_mac/jiagu.jar"
+    def JIAGU_ROOT_PATH = "./_360jiagu/jiagu/jiagu.jar"
+//    def JIAGU_ROOT_PATH_WIN = "./_360jiagu/jiagu_win/jiagu.jar"
+//    def JIAGU_ROOT_PATH_MAC = "./_360jiagu/jiagu_mac/jiagu.jar"
     /**
      * 加固完成后的apk文件存放路径===>>{Base}/{项目名}/auth_packaging/jiagu_complete/
      */
@@ -121,9 +121,9 @@ class PackagingProcesser extends DefaultTask {
             }
             //判断当前系统
             if(isMac()){
-                JIAGU_ROOT_PATH = JIAGU_ROOT_PATH_MAC
+//                JIAGU_ROOT_PATH = JIAGU_ROOT_PATH_MAC
             }else{
-                JIAGU_ROOT_PATH = JIAGU_ROOT_PATH_WIN
+//                JIAGU_ROOT_PATH = JIAGU_ROOT_PATH_WIN
             }
 
             def out = new StringBuilder()

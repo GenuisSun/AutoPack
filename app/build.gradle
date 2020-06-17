@@ -1,6 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.qizuang.plugin'
-apply from: '../_360jiagu/jiagu.gradle'
+apply from: '../_autoPack/jiagu.gradle'
 
 android {
     compileSdkVersion 30
