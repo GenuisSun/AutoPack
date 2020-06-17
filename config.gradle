@@ -8,6 +8,7 @@ ext {
     //版本号
     VERSION_CODE                   =1
     VERSION_NAME                   ="1.1"
+    //注：该信息一般写在自定义的properties文件中  避免代码上传造成泄漏
     ACCOUNT_360                   ="360U1360096455"
     PASSWORD_360                  ="589955Luting"
 
@@ -17,6 +18,7 @@ ext {
                          linux    : "https://down.360safe.com/360Jiagu/360jiagubao_linux_64.zip",
     ]
     //蒲公英配置
+    //注：该信息一般写在自定义的properties文件中  避免代码上传造成泄漏
     pgy = [apiKey   : "1598c6d546afe087a297d4a5226ee3bd",
            uploadUrl: "https://www.pgyer.com/apiv2/app/upload"]
 }

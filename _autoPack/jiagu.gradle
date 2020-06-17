@@ -3,13 +3,27 @@ apply plugin: 'de.undercouch.download'
 /**
  * Author: stc
  * Date:   2020/6/14
- *         ❤-- 使用360加固版本 3.2.2.3 2020-03-16 --❤
- *         ❤-- 如果出现,签名配置中没有匹配的签名,请使用命令行的方式单独导入签名信息. --❤
- *         ❤-- java -jar jiagu.jar  -importsign<keystore_path><keystore_password><alias><alias_password> --❤
- *         ❤-- 这有可能是360加固的BUG --❤
- *         ❤-- TODO 此文件 声明多个task是为了方便在执行流程中，更清晰的查阅到执行到那个任务 --❤
- *         ❤-- TODO 360加固文件默认是不存在的，会根据jiagu文件夹是否存在自动下载 支持mac/windows/linux--❤
- *         ❤-- TODO 如下载失败或者其他问题，可手动官网下载相关360加固文件 解压之后:将`jiagu`文件夹 拷贝到 `_autoPack` 文件夹下，即可 --❤
+ * @email: dearstc@163.com
+ *
+ * ❤-- 使用360加固版本 3.2.2.3 2020-03-16 --❤
+ *
+ *
+ * ❤❤❤----------------------------------------------------------------❤❤❤
+ * ❤❤❤--TODO  Task:_autoPack
+ * ❤❤❤--  一键打包--下载加固资源文件-360加固-瓦力打渠道包
+ * ❤❤❤--  方法一 执行gradle--->Tasks-->other-->_autoPack任务
+ * ❤❤❤--  方法二 Terminal窗口执行(powershell)-->gradle _autoPack
+ * ❤❤❤--                            (linux)-->./gradle _autoPack
+ * ❤❤❤--
+ * ❤❤❤--  多平台支持mac/windows/linux
+ * ❤❤❤--  声明多个Task是为了方便在执行流程中，更清晰的查阅到执行到那个任务
+ * ❤❤❤--  加固文件资源默认是不存在，自动从官网下载，无需特意操作
+ * ❤❤❤--  最终渠道包路径请查看打包流程日志，写的很清楚了。
+ * ❤❤❤--
+ * ❤❤❤--TODO  Task:assembleBeta
+ * ❤❤❤--  打包完成上传蒲公英的Task  依赖于assembleBeta打包
+ * ❤❤❤--  assembleBeta打包完成自动上传到蒲公英 输出相关信息  打开短链接
+ * ❤❤❤-----------------------------------------------------------------❤❤❤
  **/
 
 //360加固文件所在的文件夹名字
@@ -70,20 +84,9 @@ getRootProject().ext.jiaguConfig = [
 
 ]
 
-def getSysyemJiaGuPath() {
-    def osName = System.getProperty("os.name").toLowerCase()
-    color_print "当前操作系统:" + osName
-    if (osName.indexOf("mac") >= 0 && osName.indexOf("os") > 0) {
-        return "jiagu_mac1"
-    } else if (osName.indexOf("window") >= 0) {
-        return "jiagu_win1"
-    } else {
-        throw new RuntimeException("当前操作系统:" + osName + " not support,请集成相关系统的360加固文件")
-    }
-}
 //获取apk路径和文件名称
-project.afterEvaluate {
-}
+//project.afterEvaluate {
+//}
 
 //根据系统下载相应的360加固资源包
 task downloadZipFile( dependsOn: 'assembleRelease') {
@@ -144,7 +147,7 @@ task copyDownloadJiaGu(dependsOn: unzipFile) {
             if (file2.exists()) {
                 color_print "删除创建的jiagu文件夹：" + file2 + "   " + file2.deleteDir()
             }
-            throw new RuntimeException("没有在解压的文件夹中找到jiagu文件夹，请重试 或者 请手动请去官网下载对应的资源包，将资源包中的jiagu文件夹解压到：" + jiaguConfig.root_path + "文件夹下")
+            throw new RuntimeException("没有在解压的文件夹中找到jiagu文件夹，请重试 或者 手动官网下载相关360加固文件，将资源包中的jiagu文件夹解压到：" + jiaguConfig.root_path + "文件夹下")
         }
         copy {
             from downnload_jiagu
@@ -341,7 +344,12 @@ def clearFolder(String path) {
     }
 }
 
-/**自动读取签名配置信息 因会出现获取不到签名，需手动导入的情况，故每次直接从gradle中声明的位置获取，此方法暂时废弃*/
+/** ❤-- 自动读取签名配置信息 因会出现获取不到签名，需手动导入的情况，故每次直接从gradle中声明的位置获取，此方法暂时废弃
+ *  ❤-- 如果出现,签名配置中没有匹配的签名,请使用命令行的方式单独导入签名信息. --❤
+ *  ❤-- java -jar jiagu.jar  -importsign<keystore_path><keystore_password><alias><alias_password> --❤
+ *  ❤-- 这有可能是360加固的BUG --❤
+ * @return
+ */
 def readSigning() {
     def application = "com.android.application"
     def applicationPlugin = project.plugins.findPlugin(application)
@@ -441,10 +449,15 @@ private def uploadPGY(String filePath) {
     color_print "App二维码地址：" + parsedJson.data.buildQRCodeURL
     color_print "App上传时间：" + parsedJson.data.buildCreated
     color_print "❤❤❤❤❤❤❤❤❤❤❤❤❤❤信息打印完毕❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
+    //打开短链接
     exec {
-//        executable = 'curl'
-//        args = ["https://www.pgyer.com/4k4T"]
-        commandLine "powershell", "start", buildShortcutUrl
+        if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
+            commandLine "x-www-browser", buildShortcutUrl
+        } else if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+            commandLine "powershell", "start", buildShortcutUrl
+        } else if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
+            commandLine "open", buildShortcutUrl
+        }
     }
 }
 
