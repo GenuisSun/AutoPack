@@ -128,11 +128,22 @@ task downloadZipFile(dependsOn: 'assembleRelease') {
     }
     doLast {
         color_print "开始下载加固压缩包 请稍后。。。"
+        //TODO 方法一：使用de.undercouch.download 下载资源
         download {
             src getJiaGuZipUrlByOs()
             dest new File(jiaguConfig.download_jiagu_zip_path)
             overwrite false
         }
+        //TODO 方法二：使用系统curl命令 下载资源 目前测试window10也正常支持
+//        File zipFile = new File(jiaguConfig.download_jiagu_zip_path)
+//        if (!zipFile.exists()) {
+//            if (!zipFile.parentFile.exists()) {
+//                zipFile.parentFile.mkdirs()
+//            }
+//            def downloadUrl = getJiaGuZipUrlByOs()
+//            def cmd = "curl -o ${jiaguConfig.download_jiagu_zip_path} ${downloadUrl}"
+//            cmd.execute().waitForProcessOutput(System.out, System.err)
+//        }
         color_print "360加固资源包下载完成 路径在" + jiaguConfig.download_jiagu_zip_path
         color_print "准备对该资源包进行解压"
         color_print "执行解压任务 ❤unzipFile❤ 请稍后。。。"
@@ -208,7 +219,7 @@ task login(type: JavaExec, dependsOn: copyDownloadJiaGu) {
 login.doFirst {
     File targetFile = new File(jiaguConfig.targetApkPath)
     if (!targetFile.exists()) {
-        throw new RuntimeException("加固文件不存在:" + targetFile.getAbsolutePath())
+        throw new RuntimeException("加固apk文件不存在:" + targetFile.getAbsolutePath())
     } else {
         color_print("开始加固:" + targetFile.getAbsolutePath())
         color_print("输出渠道包zip路径:" + jiaguConfig.zipOutput)
