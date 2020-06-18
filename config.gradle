@@ -1,24 +1,26 @@
-
+// 把敏感信息存放到自定义的properties文件中
+def propertiesFile = rootProject.file("config.properties")
+def properties = new Properties()
+properties.load(new FileInputStream(propertiesFile))
 ext {
     // 调试签名信息
-    KEY_MOBILE_ALIAS               = "keyalias"
-    KEY_FILE                       = "../autopack_key.jks"
-    KEY_PASSWORD                   = "123456"
+    KEY_MOBILE_ALIAS = properties['KEY_MOBILE_ALIAS']
+    KEY_FILE = properties['KEY_FILE']
+    KEY_PASSWORD = properties['KEY_PASSWORD']
 
     //版本号
-    VERSION_CODE                   =1
-    VERSION_NAME                   ="1.1"
-    //注：该信息一般写在自定义的properties文件中  避免代码上传造成泄漏
-    ACCOUNT_360                   ="360U1360096455"
-    PASSWORD_360                  ="589955Luting"
+    VERSION_CODE = properties['VERSION_CODE']
+    VERSION_NAME = properties['VERSION_NAME']
+    //360账号密码
+    ACCOUNT_360 = properties['ACCOUNT_360']
+    PASSWORD_360 = properties['PASSWORD_360']
 
     //360加固保 首次配置自动下载  下方链接为官方链接，如官方有改动  可改
-    URL_JIAGU_ZIP_360 = [mac      : "http://down.360safe.com/360Jiagu/360jiagubao_mac.zip",
-                         windows  : "http://down.360safe.com/360Jiagu/360jiagubao_windows_64.zip",
-                         linux    : "https://down.360safe.com/360Jiagu/360jiagubao_linux_64.zip",
+    URL_JIAGU_ZIP_360 = [mac    : properties['URL_JIAGU_ZIP_360_MAC'],
+                         windows: properties['URL_JIAGU_ZIP_360_WIN'],
+                         linux  : properties['URL_JIAGU_ZIP_360_LINUX'],
     ]
     //蒲公英配置
-    //注：该信息一般写在自定义的properties文件中  避免代码上传造成泄漏
-    pgy = [apiKey   : "1598c6d546afe087a297d4a5226ee3bd",
-           uploadUrl: "https://www.pgyer.com/apiv2/app/upload"]
+    pgy = [apiKey   : properties['PGY_APIKEY'],
+           uploadUrl: properties['PGY_UPLOADURL']]
 }
