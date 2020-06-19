@@ -1,5 +1,6 @@
 import groovy.json.JsonSlurper
 
+
 apply plugin: 'de.undercouch.download'
 /**
  * Author: stc
@@ -571,6 +572,7 @@ private def uploadPGY(String filePath) {
         standardOutput = stdout
     }
     String output = stdout.toString()
+    color_print(output)
     def parsedJson = new JsonSlurper().parseText(output)
     def buildShortcutUrl = "https://www.pgyer.com/" + parsedJson.data.buildShortcutUrl
     color_print "❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤上传成功❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
@@ -606,3 +608,117 @@ private def uploadPGY(String filePath) {
 def color_print(String value) {
     printf "\033[1;32m❤❤❤%s\033[0m\n", value
 }
+
+
+task upload2Fir() {
+    group folder_name  //可不设置, 我这里将任务建在了pack分组中
+    doLast {
+        def apkFile
+        rootProject.subprojects {
+            if (it.name == 'app') { //此处根据gradle project的名字查找到对应module下需要上传的apk
+                def apkDir = new File(it.buildDir.path + "/outputs/apk", "release")
+
+                def modified = 0
+                def lastModifiedDir = apkDir
+                //寻找当前路径下最新apk包所在路径
+                apkDir.listFiles().each { dir ->
+
+                    def last = dir.lastModified()
+                    if (dir.isDirectory() && last > modified) {
+                        modified = last
+                        lastModifiedDir = dir
+                    }
+                }
+
+                //寻找当前路径下后缀为apk、名称包含release字样的文件
+                def apkfiles = lastModifiedDir.listFiles(new FilenameFilter() {
+                    @Override
+                    boolean accept(File dir, String name) {
+                        return (name.endsWith('.apk') && name.contains('release'))
+                    }
+                })
+                if (apkfiles == null || apkfiles.length == 0) {
+                    println("出错啦！没有找到apk文件")
+                    return
+                }
+                //由于我们的项目对每次打包的包名根据时间戳进行命名, 默认第一个为最新包,所以取first
+                apkFile = apkfiles.first()
+
+            }
+        }
+        color_print "即将上传 ${apkFile} 到fir"
+
+        //fir api_token
+        def FIR_API_TOKEN = "399dfa83b6535b22838e8e8c2297816f"
+        //packageName fir上应用的包名
+        def packageName = "com.stc.autopack"
+        //获取fir上传凭证的各个字段
+        def appInfo = ("curl -X POST -d type=android&bundle_id=$packageName&api_token=$FIR_API_TOKEN http://api.fir.im/apps").execute().text
+
+        //json解析对象拿到的是Map, 集合对应的是array, 按照这个规则取出我们需要的数据
+        def appInfoBean = new JsonSlurper().parseText(appInfo)
+        color_print appInfoBean.toString()
+        def token = appInfoBean["cert"]["binary"]["token"]
+        def key = appInfoBean["cert"]["binary"]["key"]
+        def url = appInfoBean["cert"]["binary"]["upload_url"]
+        def shortUrl = "http://" + appInfoBean["download_domain"] + "/"+appInfoBean["short"]
+        //执行上传命令
+//        ("curl -X POST --form  file=@$apkFile" +
+//                " -F token=$token" +
+//                " -F key=$key" +
+//                " -F x:name=$project.name" +
+//                " -F x:version=$project.VERSION_NAME" +
+//                " -F x:build=$project.VERSION_CODE" +
+//                " -F x:changelog=123456" +
+//                " $url").execute().waitForProcessOutput(System.out, System.err)
+//                def cmd = "curl -o ${jiaguConfig.download_jiagu_zip_path} ${downloadUrl}"
+//            cmd.execute().waitForProcessOutput(System.out, System.err)
+        def stdout = new ByteArrayOutputStream()
+        exec {
+            executable = 'curl'
+            args = ['-F', "file=@${apkFile}",
+                    '-F', "token=${token}",
+                    '-F', "key=${key}",
+                    '-F', "x:name=${project.getName()}",
+                    '-F', "x:version=${project.VERSION_NAME}",
+                    '-F', "x:build=${project.VERSION_CODE}",
+                    '-F', "x:changelog=123456",
+                    url]
+            standardOutput = stdout
+        }
+        //todo 结果逻辑修改
+        color_print stdout.toString()
+        def parsedJson = new JsonSlurper().parseText(stdout.toString())
+//        if(parsedJson.is_completed){
+//            color_print "上传 $apkFile 完成"
+//            color_print "$project.name fir下载短链接为：" + shortUrl
+//        }else{
+//            color_print "未知错误 请检查"
+//        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
