@@ -138,21 +138,21 @@ task downloadZipFile(dependsOn: 'assembleRelease') {
     doLast {
         color_print "开始下载加固压缩包 请稍后。。。"
         //TODO 方法一：使用de.undercouch.download 下载资源
-        download {
-            src getJiaGuZipUrlByOs()
-            dest new File(jiaguConfig.download_jiagu_zip_path)
-            overwrite false
-        }
-        //TODO 方法二：使用系统curl命令 下载资源 目前测试window10也正常支持
-//        File zipFile = new File(jiaguConfig.download_jiagu_zip_path)
-//        if (!zipFile.exists()) {
-//            if (!zipFile.parentFile.exists()) {
-//                zipFile.parentFile.mkdirs()
-//            }
-//            def downloadUrl = getJiaGuZipUrlByOs()
-//            def cmd = "curl -o ${jiaguConfig.download_jiagu_zip_path} ${downloadUrl}"
-//            cmd.execute().waitForProcessOutput(System.out, System.err)
+//        download {
+//            src getJiaGuZipUrlByOs()
+//            dest new File(jiaguConfig.download_jiagu_zip_path)
+//            overwrite false
 //        }
+        //TODO 方法二：使用系统curl命令 下载资源 目前测试window10 mac正常支持
+        File zipFile = new File(jiaguConfig.download_jiagu_zip_path)
+        if (!zipFile.exists()) {
+            if (!zipFile.parentFile.exists()) {
+                zipFile.parentFile.mkdirs()
+            }
+            def downloadUrl = getJiaGuZipUrlByOs()
+            def cmd = "curl -o ${jiaguConfig.download_jiagu_zip_path} ${downloadUrl}"
+            cmd.execute().waitForProcessOutput(System.out, System.err)
+        }
         color_print "360加固资源包下载完成 路径在" + jiaguConfig.download_jiagu_zip_path
         color_print "准备对该资源包进行解压"
         color_print "执行解压任务 ❤unzipFile❤ 请稍后。。。"
@@ -661,40 +661,29 @@ task upload2Fir() {
         def token = appInfoBean["cert"]["binary"]["token"]
         def key = appInfoBean["cert"]["binary"]["key"]
         def url = appInfoBean["cert"]["binary"]["upload_url"]
-        def shortUrl = "http://" + appInfoBean["download_domain"] + "/"+appInfoBean["short"]
+        def buildShortcutUrl = "http://" + appInfoBean["download_domain"] + "/"+appInfoBean["short"]
         //执行上传命令
-//        ("curl -X POST --form  file=@$apkFile" +
-//                " -F token=$token" +
-//                " -F key=$key" +
-//                " -F x:name=$project.name" +
-//                " -F x:version=$project.VERSION_NAME" +
-//                " -F x:build=$project.VERSION_CODE" +
-//                " -F x:changelog=123456" +
-//                " $url").execute().waitForProcessOutput(System.out, System.err)
-//                def cmd = "curl -o ${jiaguConfig.download_jiagu_zip_path} ${downloadUrl}"
-//            cmd.execute().waitForProcessOutput(System.out, System.err)
-        def stdout = new ByteArrayOutputStream()
+        //todo 项目名称获取
+        ("curl -X POST --form  file=@$apkFile" +
+                " -F token=$token" +
+                " -F key=$key" +
+                " -F x:name=$project.name" +
+                " -F x:version=$project.VERSION_NAME" +
+                " -F x:build=$project.VERSION_CODE" +
+                " -F x:changelog=123456" +
+                " $url").execute().waitForProcessOutput(System.out, System.err)
+        color_print "上传 $apkFile 完成"
+        color_print "$project.name fir下载短链接为：" + buildShortcutUrl
+        //打开短链接
         exec {
-            executable = 'curl'
-            args = ['-F', "file=@${apkFile}",
-                    '-F', "token=${token}",
-                    '-F', "key=${key}",
-                    '-F', "x:name=${project.getName()}",
-                    '-F', "x:version=${project.VERSION_NAME}",
-                    '-F', "x:build=${project.VERSION_CODE}",
-                    '-F', "x:changelog=123456",
-                    url]
-            standardOutput = stdout
+            if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
+                commandLine "x-www-browser", buildShortcutUrl
+            } else if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+                commandLine "powershell", "start", buildShortcutUrl
+            } else if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
+                commandLine "open", buildShortcutUrl
+            }
         }
-        //todo 结果逻辑修改
-        color_print stdout.toString()
-        def parsedJson = new JsonSlurper().parseText(stdout.toString())
-//        if(parsedJson.is_completed){
-//            color_print "上传 $apkFile 完成"
-//            color_print "$project.name fir下载短链接为：" + shortUrl
-//        }else{
-//            color_print "未知错误 请检查"
-//        }
     }
 }
 
