@@ -15,11 +15,6 @@ ext {
     ACCOUNT_360 = properties['ACCOUNT_360']
     PASSWORD_360 = properties['PASSWORD_360']
 
-    //360加固保 首次配置自动下载  下方链接为官方链接，如官方有改动  可改
-    URL_JIAGU_ZIP_360 = [mac    : properties['URL_JIAGU_ZIP_360_MAC'],
-                         windows: properties['URL_JIAGU_ZIP_360_WIN'],
-                         linux  : properties['URL_JIAGU_ZIP_360_LINUX'],
-    ]
     //蒲公英配置
     pgy = [apiKey   : properties['PGY_APIKEY'],
            uploadUrl: properties['PGY_UPLOADURL']]

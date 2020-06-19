@@ -1,0 +1,250 @@
+/**
+ * @author hule
+ * @date 2020/04/15 13:42
+ * description:360自动加固+Vaslloy多渠道打包
+ * https://blog.csdn.net/u012999651/article/details/105764812?utm_medium=distribute.pc_relevant.none-task-blog-baidujs-3
+ */
+
+// 把敏感信息存放到自定义的properties文件中
+def propertiesFile = rootProject.file("config.properties")
+def properties = new Properties()
+properties.load(new FileInputStream(propertiesFile))
+
+ext {
+    // 签名配置
+    signing = [keyAlias     : properties['KEY_MOBILE_ALIAS'],
+               keyPassword  : properties['KEY_PASSWORD'],
+               storeFile    : properties['KEY_FILE'],
+               storePassword: properties['KEY_PASSWORD']
+    ]
+
+    // app相关的配置
+    app = [
+            //默认release apk的文件路径，因为加固是基于release包的
+            releasePath : "${project.buildDir}/outputs/apk/release",
+            //对release apk 加固后产生的加固apk地址
+            packersPath : "${project.buildDir}/outputs/packers",
+            //加固后进行腾讯多渠道打包的地址
+            channelPath : "${project.buildDir}/outputs/channels",
+            //腾讯VasDolly多渠道打包jar包地址
+            vasDollyPath: "../VasDolly.jar"
+    ]
+
+    // 360加固配置
+    packers = [account          : properties['ACCOUNT_360'], //账号
+               password         : properties['PASSWORD_360'],  //密码
+               zipPath          : "${project.rootDir}/jiagu/360jiagu.zip",  //加固压缩包路径
+               unzipPath        : "${project.rootDir}/jiagu/360jiagubao/",  //加固解压路径
+               jarPath          : "${project.rootDir}/jiagu/360jiagubao/jiagu/jiagu.jar",  //执行命令的jar包路径
+               channelConfigPath: "${project.rootDir}/_autoPack/Channel",  //加固多渠道
+               jiagubao_mac     : "https://down.360safe.com/360Jiagu/360jiagubao_mac.zip",  //加固mac下载地址
+               jiagubao_windows : "https://down.360safe.com/360Jiagu/360jiagubao_windows_64.zip" //加固widnows下载地址
+    ]
+}
+
+/**
+ *  360加固,适用于新后台打包
+ */
+task packersNewRelease {
+    group '_autoPack'
+    dependsOn 'assembleRelease'
+    doLast {
+        //删除加固后的渠道包
+        deleteFile()
+        // 下载360加固文件
+        download360jiagu()
+        // 寻找打包文件release apk
+        def releaseFile = findReleaseApk()
+        if (releaseFile != null) {
+            //执行加固签名
+            packers360(releaseFile)
+            //对加固后的apk重新用腾讯channel构建渠道包
+            reBuildChannel()
+        } else {
+            println 'packers===can\'t find release apk and can\'t excute 360 jiagu'
+        }
+    }
+}
+
+/**
+ * 适用于老后台，老后台需要在渠道apk的名称增加前缀 app-
+ */
+task packersOldRelease {
+    group 'packers'
+    doLast {
+        File channelFile = file("${app["channelPath"]}/new")
+        if (!channelFile.exists() || !channelFile.listFiles()) {
+            println 'packers==== please excute pakcersNewRelease first!'
+        } else {
+            File oldChannelFile = file("${app["channelPath"]}/old")
+            if (!oldChannelFile.exists()) {
+                oldChannelFile.mkdirs()
+            }
+            // 对文件集合进行迭代
+            channelFile.listFiles().each { File file ->
+                copy {
+                    from file.absolutePath
+                    into oldChannelFile.absolutePath
+                    rename(file.name, "app-${file.name}")
+                }
+            }
+            println 'packers===packersOldRelease sucess'
+        }
+    }
+}
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+/**
+ *  加固后，打新版本的渠道包时，同时生成老版本的渠道包
+ */
+task packersRelease {
+    group 'packers'
+    dependsOn packersNewRelease
+    dependsOn packersOldRelease
+    packersOldRelease.mustRunAfter(packersNewRelease)
+    doLast {
+        println "packers===packersRelease finished"
+    }
+}
+
+/**
+ *  对于release apk 进行360加固
+ */
+def packers360(File releaseApk) {
+    println 'packers===beginning 360 jiagu'
+    def packersFile = file(app["packersPath"])
+    if (!packersFile.exists()) {
+        packersFile.mkdir()
+    }
+    exec {
+        // 登录360加固保
+        executable = 'java'
+        args = ['-jar', packers["jarPath"], '-login', packers["account"], packers["password"]]
+        println 'packers===import 360 login'
+    }
+    exec {
+        // 导入签名信息
+        executable = 'java'
+        args = ['-jar', packers["jarPath"], '-importsign', signing["storeFile"],
+                signing["storePassword"], signing["keyAlias"], signing["keyPassword"]]
+        println 'packers===import 360 sign'
+    }
+    exec {
+        // 查看360加固签名信息
+        executable = 'java'
+        args = ['-jar', packers["jarPath"], '-showsign']
+        println 'packers===show 360 sign'
+    }
+    exec {
+        // 初始化加固服务配置,后面可不带参数
+        executable = 'java'
+        args = ['-jar', packers["jarPath"], '-config']
+        println 'packers===init 360 services'
+    }
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        // 执行加固
+        executable = 'java'
+        args = ['-jar', packers["jarPath"], '-jiagu', releaseApk.absolutePath, app["packersPath"], '-autosign']
+        standardOutput = stdout
+        println 'packers===excute 360 jiagu'
+    }
+    println stdout.toString()
+    println 'packers===360 jiagu finished'
+    println "packers===360 jiagu path ${app["packersPath"]}"
+}
+
+/**
+ * 自动下载360加固保，也可以自己下载然后放到根目录
+ */
+def download360jiagu() {
+    // 下载360压缩包
+    File zipFile = file(packers["zipPath"])
+    if (!zipFile.exists()) {
+        if (!zipFile.parentFile.exists()) {
+            zipFile.parentFile.mkdirs()
+            println("packers===create parentFile jiagu ${zipFile.parentFile.absolutePath}")
+        }
+        // 加固保的下载地址
+        def downloadUrl = isWindows() ? packers["jiagubao_windows"] : packers["jiagubao_mac"]
+        // mac自带curl命令 windows需要下载curl安装
+        def cmd = "curl -o ${packers["zipPath"]} ${downloadUrl}"
+        println cmd
+        cmd.execute().waitForProcessOutput(System.out, System.err)
+    }
+    File unzipFile = file(packers["unzipPath"])
+    if (!unzipFile.exists()) {
+        //解压 Zip 文件
+        ant.unzip(src: packers["zipPath"], dest: packers["unzipPath"], encoding: "GBK")
+        println 'packers===unzip 360jiagu'
+        //将解压后的文件开启读写权限，防止执行 Jar 文件没有权限执行，windows需要自己手动改
+        if (!isWindows()) {
+            def cmd = "chmod -R 777 ${packers["unzipPath"]}"
+            println cmd
+            cmd.execute().waitForProcessOutput(System.out, System.err)
+        }
+    }
+}
+
+/**
+ * 腾讯channel重新构建渠道包
+ */
+def reBuildChannel() {
+    File channelFile = file("${app["channelPath"]}/new")
+    if (!channelFile.exists()) {
+        channelFile.mkdirs()
+    }
+    def cmd = "java -jar ${app["vasDollyPath"]} put -c ${"../channel.txt"} ${outputpackersApk()} ${channelFile.absolutePath}"
+    println cmd
+    cmd.execute().waitForProcessOutput(System.out, System.err)
+    println 'packers===excute VasDolly reBuildChannel'
+}
+
+/**
+ *  是否是windows系统
+ * @return
+ */
+static Boolean isWindows() {
+    return System.properties['os.name'].contains('Windows')
+}
+
+/**
+ * 寻找本地的release  apk
+ * @return true
+ */
+def deleteFile() {
+    delete app["channelPath"]
+    delete app["packersPath"]
+    println 'packers===delete all file'
+}
+
+/**
+ * 首先打一个release包，然后找到当前的文件进行加固
+ * @return releaseApk
+ */
+def findReleaseApk() {
+    def apkDir = file(app["releasePath"])
+    File releaseApk = apkDir.listFiles().find { it.isFile() && it.name.endsWith(".apk") }
+    println "packers===find release apk ${releaseApk.name}"
+    return releaseApk
+}
+/**
+ *  加固输出并且重新命名
+ * @return packersApk
+ */
+def outputpackersApk() {
+    File oldApkDir = file(app["packersPath"])
+    File oldApk = oldApkDir.listFiles().find { it.isFile() && it.name.contains("jiagu") }
+    println "packers===output pacckers sourceApk ${oldApk.name}"
+    copy {
+        from app["packersPath"] + File.separator + oldApk.name
+        into app["packersPath"]
+        rename(oldApk.name, "release.apk")
+        println 'packers===output pacckers renameApk release.apk'
+    }
+    File newApk = oldApkDir.listFiles().find { it.isFile() && it.name.equals("release.apk") }
+    println "packers===output packers renameApk${newApk.absolutePath}"
+    return newApk.absolutePath
+}

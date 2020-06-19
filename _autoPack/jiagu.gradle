@@ -91,6 +91,14 @@ getRootProject().ext.jiaguConfig = [
         //walle分包输出目录
         "walleOutput"            : projectPath + "/" + folder_name + "/output/walle",
 
+        //todo 360加固保 首次配置自动下载  下方链接为官方链接，如官方有改动  可改
+        //加固mac下载地址
+        "jiagubao_mac"           : "https://down.360safe.com/360Jiagu/360jiagubao_mac.zip",
+        //加固widnows下载地址
+        "jiagubao_windows"       : "https://down.360safe.com/360Jiagu/360jiagubao_windows_64.zip",
+        //加固linux下载地址
+        "jiagubao_linux"         : "https://down.360safe.com/360Jiagu/360jiagubao_linux_64.zip"
+
 ]
 //❤❤❤❤❤❤start❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤
 /**
@@ -425,11 +433,11 @@ def getJiaGuZipUrlByOs() {
     color_print "当前使用系统 $osName $osVersion was detected."
 
     if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
-        url = rootProject.ext.URL_JIAGU_ZIP_360["linux"]
+        url = jiaguConfig.jiagubao_linux
     } else if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-        url = rootProject.ext.URL_JIAGU_ZIP_360["windows"]
+        url = jiaguConfig.jiagubao_windows
     } else if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
-        url = rootProject.ext.URL_JIAGU_ZIP_360["mac"]
+        url = jiaguConfig.jiagubao_mac
     } else {
         throw new RuntimeException("不支持当前操作系统：" + osName)
     }
