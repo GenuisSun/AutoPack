@@ -8,6 +8,7 @@ ext {
     KEY_FILE = properties['KEY_FILE']
     KEY_PASSWORD = properties['KEY_PASSWORD']
 
+    APP_NAME = properties['APP_NAME']
     //版本号
     VERSION_CODE = properties['VERSION_CODE']
     VERSION_NAME = properties['VERSION_NAME']
