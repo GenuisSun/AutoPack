@@ -391,8 +391,8 @@ task _autoPack(dependsOn: zipChannel, description: '一键打包--下载加固�
     group folder_name
     doLast {
         color_print "加固打包流程结束:"
-        color_print("渠道包路径:" + jiaguConfig.walleOutput)
-        color_print("zip包路径:" + jiaguConfig.zipOutput)
+        color_printResult("渠道包路径:" + jiaguConfig.walleOutput)
+        color_printResult("zip包路径:" + jiaguConfig.zipOutput)
     }
 }
 
@@ -596,17 +596,17 @@ private def uploadPGY(String filePath) {
     color_print(output)
     def parsedJson = new JsonSlurper().parseText(output)
     def buildShortcutUrl = "https://www.pgyer.com/" + parsedJson.data.buildShortcutUrl
-    color_print "❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤上传成功❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
-    color_print "App的名称：" + parsedJson.data.buildFileName
-    color_print "App版本号：" + parsedJson.data.buildVersion
-    color_print "App版本号：" + parsedJson.data.buildVersionNo
-    color_print "AppBuildVersion：" + parsedJson.data.buildBuildVersion
-    color_print "App包体积：" + parsedJson.data.buildFileSize
-    color_print "App短链接：" + buildShortcutUrl
-    color_print "App下载页地址：https://www.pgyer.com/" + parsedJson.data.buildKey
-    color_print "App二维码地址：" + parsedJson.data.buildQRCodeURL
-    color_print "App上传时间：" + parsedJson.data.buildCreated
-    color_print "❤❤❤❤❤❤❤❤❤❤❤❤❤❤信息打印完毕❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
+    color_printResult "❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤上传成功❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
+    color_printResult "App的名称：" + parsedJson.data.buildFileName
+    color_printResult "App版本号：" + parsedJson.data.buildVersion
+    color_printResult "App版本号：" + parsedJson.data.buildVersionNo
+    color_printResult "AppBuildVersion：" + parsedJson.data.buildBuildVersion
+    color_printResult "App包体积：" + parsedJson.data.buildFileSize
+    color_printResult "App短链接：" + buildShortcutUrl
+    color_printResult "App下载页地址：https://www.pgyer.com/" + parsedJson.data.buildKey
+    color_printResult "App二维码地址：" + parsedJson.data.buildQRCodeURL
+    color_printResult "App上传时间：" + parsedJson.data.buildCreated
+    color_printResult "❤❤❤❤❤❤❤❤❤❤❤❤❤❤信息打印完毕❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
     //打开短链接
     exec {
         if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
@@ -629,7 +629,7 @@ def uploadFir(String filePath) {
     color_print "即将上传到fir:"+filePath
 
     //fir api_token
-    def FIR_API_TOKEN = "399dfa83b6535b22838e8e8c2297816f"
+    def FIR_API_TOKEN = project.FIR_API_TOKEN
     //packageName fir上应用的包名
     def packageName = "com.stc.autopack"
     //获取fir上传凭证的各个字段
@@ -637,14 +637,12 @@ def uploadFir(String filePath) {
 
     //json解析对象拿到的是Map, 集合对应的是array, 按照这个规则取出我们需要的数据
     def appInfoBean = new JsonSlurper().parseText(appInfo)
-    color_print appInfoBean.toString()
     def token = appInfoBean["cert"]["binary"]["token"]
     def key = appInfoBean["cert"]["binary"]["key"]
     def url = appInfoBean["cert"]["binary"]["upload_url"]
     def buildShortcutUrl = "http://" + appInfoBean["download_domain"] + "/"+appInfoBean["short"]
 
-    //执行上传命令
-    //todo 项目名称获取
+    //执行上传命令 此方法如发生错误无法跳出
 //    ("curl -X POST --form file=@$filePath" +
 //            " -F token=$token" +
 //            " -F key=$key" +
@@ -670,9 +668,13 @@ def uploadFir(String filePath) {
     String output = stdout.toString()
     color_print(output)
 
-    color_print "❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤上传成功❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
-    color_print "fir下载短链接为：" + buildShortcutUrl
-    color_print "❤❤❤❤❤❤❤❤❤❤❤❤❤❤信息打印完毕❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
+    color_printResult "❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤上传成功❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
+    color_printResult ""
+    color_printResult ""
+    color_printResult "     fir下载短链接为：" + buildShortcutUrl
+    color_printResult ""
+    color_printResult ""
+    color_printResult "❤❤❤❤❤❤❤❤❤❤❤❤❤❤信息打印完毕❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
     //打开短链接
     exec {
         if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
@@ -694,5 +696,8 @@ def uploadFir(String filePath) {
  * @return
  */
 def color_print(String value) {
+    printf "\033[1;33m❤❤❤%s\033[0m\n", value
+}
+def color_printResult(String value) {
     printf "\033[1;32m❤❤❤%s\033[0m\n", value
 }
