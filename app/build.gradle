@@ -25,14 +25,22 @@ android {
     }
 
     buildTypes {
+        debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            resValue 'string', 'app_name', "AutoPackDebug"
+            signingConfig signingConfigs.keyConfig
+        }
         beta {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            resValue 'string', 'app_name', "AutoPackBeta"
             signingConfig signingConfigs.keyConfig
         }
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            resValue 'string', 'app_name', "AutoPackRelease"
             signingConfig signingConfigs.keyConfig
         }
     }
