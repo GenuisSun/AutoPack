@@ -9,7 +9,7 @@ android {
     defaultConfig {
         applicationId "com.stc.autopack"
         minSdkVersion 28
-        targetSdkVersion 29
+        targetSdkVersion 30
         versionCode VERSION_CODE as int
         versionName VERSION_NAME
 
@@ -28,19 +28,19 @@ android {
         debug {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            resValue 'string', 'app_name', "AutoPackDebug"
+            resValue 'string', 'app_name', "打包Debug"
             signingConfig signingConfigs.keyConfig
         }
         beta {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            resValue 'string', 'app_name', "AutoPackBeta"
+            resValue 'string', 'app_name', "打包Beta"
             signingConfig signingConfigs.keyConfig
         }
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            resValue 'string', 'app_name', "AutoPackRelease"
+            resValue 'string', 'app_name', "打包Release"
             signingConfig signingConfigs.keyConfig
         }
     }

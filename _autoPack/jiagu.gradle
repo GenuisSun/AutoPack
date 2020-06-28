@@ -631,7 +631,7 @@ def uploadFir(String filePath) {
     //fir api_token
     def FIR_API_TOKEN = project.FIR_API_TOKEN
     //packageName fir上应用的包名
-    def packageName = "com.stc.autopack"
+    def packageName = project.android.defaultConfig.applicationId
     //获取fir上传凭证的各个字段
     def appInfo = ("curl -X POST -d type=android&bundle_id=$packageName&api_token=$FIR_API_TOKEN http://api.fir.im/apps").execute().text
 
@@ -659,9 +659,9 @@ def uploadFir(String filePath) {
                 '-F', "token=$token",
                 '-F', "key=$key",
                 '-F', "x:name=$project.APP_NAME",
-                '-F', "x:version=$project.VERSION_NAME",
-                '-F', "x:build=$project.VERSION_CODE",
-                '-F', "x:changelog=123456",
+                '-F', "x:version=$project.android.defaultConfig.versionName",
+                '-F', "x:build=$project.android.defaultConfig.versionCode",
+                '-F', "x:changelog=待添加",
                 url]
         standardOutput = stdout
     }
