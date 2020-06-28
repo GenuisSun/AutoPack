@@ -10,6 +10,7 @@ ext {
 
     APP_NAME = properties['APP_NAME']
     FIR_API_TOKEN = properties['FIR_API_TOKEN']
+    FIR_APP_ICON = properties['FIR_APP_ICON']
     //版本号
     VERSION_CODE = properties['VERSION_CODE']
     VERSION_NAME = properties['VERSION_NAME']

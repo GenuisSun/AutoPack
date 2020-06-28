@@ -391,8 +391,8 @@ task _autoPack(dependsOn: zipChannel, description: '一键打包--下载加固�
     group folder_name
     doLast {
         color_print "加固打包流程结束:"
-        color_printResult("渠道包路径:" + jiaguConfig.walleOutput)
-        color_printResult("zip包路径:" + jiaguConfig.zipOutput)
+        color_printSuccess("渠道包路径:" + jiaguConfig.walleOutput)
+        color_printSuccess("zip包路径:" + jiaguConfig.zipOutput)
     }
 }
 
@@ -521,7 +521,7 @@ def readSigning() {
 task assembleBetaToPGY(dependsOn: 'assembleBeta', description: '打测试包并上传到蒲公英') {
     group folder_name
     doLast {
-        _uploadApp('beta',false)
+        _uploadApp('beta', false)
     }
 }
 
@@ -531,7 +531,7 @@ task assembleBetaToPGY(dependsOn: 'assembleBeta', description: '打测试包并�
 task assembleReleaseToPGY(dependsOn: 'assembleRelease', description: '打正式包并上传到蒲公英') {
     group folder_name
     doLast {
-        _uploadApp('release',false)
+        _uploadApp('release', false)
     }
 }
 /**
@@ -540,7 +540,7 @@ task assembleReleaseToPGY(dependsOn: 'assembleRelease', description: '打正式�
 task assembleBetaToFir(dependsOn: 'assembleBeta', description: '打测试包并上传到Fir') {
     group folder_name
     doLast {
-        _uploadApp('beta',true)
+        _uploadApp('beta', true)
     }
 }
 
@@ -550,28 +550,28 @@ task assembleBetaToFir(dependsOn: 'assembleBeta', description: '打测试包并�
 task assembleReleaseToFir(dependsOn: 'assembleRelease', description: '打正式包并上传到Fir') {
     group folder_name
     doLast {
-        _uploadApp('release',true)
+        _uploadApp('release', true)
     }
 }
 
 /**
  * 上传apk至蒲公英前进行路径文件检查
  */
-def _uploadApp(String name,boolean fir) {
+def _uploadApp(String name, boolean fir) {
     project.outgoingVariants.
             project.android.applicationVariants.all { variant ->
         //对应app/build.gradle文件声明 buildTypes 下声明的打包类型
         if (variant.name.toLowerCase().endsWith(name)) {
             variant.outputs.each { output ->
-                color_print "上传"+(fir? " fir平台 ":" 蒲公英平台 ")+"的apk路径:" + output.outputFile.getAbsolutePath()
+                color_print "上传" + (fir ? " fir平台 " : " 蒲公英平台 ") + "的apk路径:" + output.outputFile.getAbsolutePath()
                 File dir = new File(output.outputFile.getAbsolutePath())
                 if (!dir.exists()) {
                     throw new RuntimeException("目标apk路径 not exists：" + dir.path)
                 }
-                if(fir){
+                if (fir) {
                     //上传fir
                     uploadFir(dir.path)
-                }else{
+                } else {
                     //上传蒲公英
                     uploadPGY(dir.path)
                 }
@@ -585,7 +585,6 @@ def _uploadApp(String name,boolean fir) {
  * 上传apk到蒲公英
  */
 private def uploadPGY(String filePath) {
-    color_print "即将上传到蒲公英:"+filePath
     def stdout = new ByteArrayOutputStream()
     exec {
         executable = 'curl'
@@ -595,28 +594,18 @@ private def uploadPGY(String filePath) {
     String output = stdout.toString()
     color_print(output)
     def parsedJson = new JsonSlurper().parseText(output)
-    def buildShortcutUrl = "https://www.pgyer.com/" + parsedJson.data.buildShortcutUrl
-    color_printResult "❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤上传成功❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
-    color_printResult "App的名称：" + parsedJson.data.buildFileName
-    color_printResult "App版本号：" + parsedJson.data.buildVersion
-    color_printResult "App版本号：" + parsedJson.data.buildVersionNo
-    color_printResult "AppBuildVersion：" + parsedJson.data.buildBuildVersion
-    color_printResult "App包体积：" + parsedJson.data.buildFileSize
-    color_printResult "App短链接：" + buildShortcutUrl
-    color_printResult "App下载页地址：https://www.pgyer.com/" + parsedJson.data.buildKey
-    color_printResult "App二维码地址：" + parsedJson.data.buildQRCodeURL
-    color_printResult "App上传时间：" + parsedJson.data.buildCreated
-    color_printResult "❤❤❤❤❤❤❤❤❤❤❤❤❤❤信息打印完毕❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
-    //打开短链接
-    exec {
-        if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
-            commandLine "x-www-browser", buildShortcutUrl
-        } else if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-            commandLine "powershell", "start", buildShortcutUrl
-        } else if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
-            commandLine "open", buildShortcutUrl
-        }
-    }
+    color_printSuccess "❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤上传成功❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
+    color_printSuccess "App的名称：" + parsedJson.data.buildFileName
+    color_printSuccess "App版本号：" + parsedJson.data.buildVersion
+    color_printSuccess "App版本号：" + parsedJson.data.buildVersionNo
+    color_printSuccess "AppBuildVersion：" + parsedJson.data.buildBuildVersion
+    color_printSuccess "App包体积：" + parsedJson.data.buildFileSize
+    color_printSuccess "App短链接：" + buildShortcutUrl
+    color_printSuccess "App下载页地址：https://www.pgyer.com/" + parsedJson.data.buildKey
+    color_printSuccess "App二维码地址：" + parsedJson.data.buildQRCodeURL
+    color_printSuccess "App上传时间：" + parsedJson.data.buildCreated
+    color_printSuccess "❤❤❤❤❤❤❤❤❤❤❤❤❤❤信息打印完毕❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
+    openBrowser("https://www.pgyer.com/" + parsedJson.data.buildShortcutUrl)
 }
 
 
@@ -626,8 +615,6 @@ private def uploadPGY(String filePath) {
  * @return
  */
 def uploadFir(String filePath) {
-    color_print "即将上传到fir:"+filePath
-
     //fir api_token
     def FIR_API_TOKEN = project.FIR_API_TOKEN
     //packageName fir上应用的包名
@@ -635,54 +622,72 @@ def uploadFir(String filePath) {
     //获取fir上传凭证的各个字段
     def appInfo = ("curl -X POST -d type=android&bundle_id=$packageName&api_token=$FIR_API_TOKEN http://api.fir.im/apps").execute().text
 
+//    color_print(appInfo.toString())
     //json解析对象拿到的是Map, 集合对应的是array, 按照这个规则取出我们需要的数据
     def appInfoBean = new JsonSlurper().parseText(appInfo)
-    def token = appInfoBean["cert"]["binary"]["token"]
-    def key = appInfoBean["cert"]["binary"]["key"]
-    def url = appInfoBean["cert"]["binary"]["upload_url"]
-    def buildShortcutUrl = "http://" + appInfoBean["download_domain"] + "/"+appInfoBean["short"]
+    //短链接
+    def buildShortcutUrl = "http://" + appInfoBean["download_domain"] + "/" + appInfoBean["short"]
+    //应用id 用来修改应用信息
+    def id = appInfoBean["id"]
 
-    //执行上传命令 此方法如发生错误无法跳出
-//    ("curl -X POST --form file=@$filePath" +
-//            " -F token=$token" +
-//            " -F key=$key" +
-//            " -F x:name=$project.APP_NAME" +
-//            " -F x:version=$project.VERSION_NAME" +
-//            " -F x:build=$project.VERSION_CODE" +
-//            " -F x:changelog=123456" +
-//            " $url").execute().waitForProcessOutput(System.out, System.err)
-
-    def stdout = new ByteArrayOutputStream()
-    exec {
-        executable = 'curl'
-        args = ['-F', "file=@${filePath}",
-                '-F', "token=$token",
-                '-F', "key=$key",
-                '-F', "x:name=$project.APP_NAME",
-                '-F', "x:version=$project.android.defaultConfig.versionName",
-                '-F', "x:build=$project.android.defaultConfig.versionCode",
-                '-F', "x:changelog=待添加",
-                url]
-        standardOutput = stdout
+    File file = file(project.FIR_APP_ICON)
+    if(file.exists()){
+        //上传应用icon
+        def uploadIcon = new ByteArrayOutputStream()
+        exec {
+            executable = 'curl'
+            args = ['-F', "file=@${project.FIR_APP_ICON}",
+                    '-F', "token=${appInfoBean["cert"]["icon"]["token"]}",
+                    '-F', "key=${appInfoBean["cert"]["icon"]["key"]}",
+                    appInfoBean["cert"]["icon"]["upload_url"]]
+            standardOutput = uploadIcon
+        }
+        color_print("应用icon上传结果(无影响，非必要)：" + uploadIcon.toString())
+    }else{
+        color_printError("应用icon文件不存在(无影响，非必要)：若需要，请检查全局变量FIR_APP_ICON设置的路径图片是否存在")
     }
-    String output = stdout.toString()
-    color_print(output)
 
-    color_printResult "❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤上传成功❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
-    color_printResult ""
-    color_printResult ""
-    color_printResult "     fir下载短链接为：" + buildShortcutUrl
-    color_printResult ""
-    color_printResult ""
-    color_printResult "❤❤❤❤❤❤❤❤❤❤❤❤❤❤信息打印完毕❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
+    //上传apk文件
+    def upload = ("curl -X POST --form file=@$filePath" +
+            " -F token=${appInfoBean["cert"]["binary"]["token"]}" +
+            " -F key=${appInfoBean["cert"]["binary"]["key"]}" +
+            " -F x:version=$project.android.defaultConfig.versionName" +
+            " -F x:build=$project.android.defaultConfig.versionCode" +
+            " -F x:changelog=123456" +
+            " ${appInfoBean["cert"]["binary"]["upload_url"]}").execute().text
+
+//    color_print upload.toString()
+    try {
+        def uploadResult = new JsonSlurper().parseText(upload)
+        if (uploadResult.is_completed) {
+            //修改app应用名称 如果在直接上传里面设置appname会中文乱码，故需要重新走一下修改信息  官方未解释原因
+            def appName = URLEncoder.encode(project.APP_NAME)
+            def updateInfo = ("curl -X PUT -d name=$appName -d api_token=$FIR_API_TOKEN http://api.bq04.com/apps/$id").execute().text
+//            color_print(updateInfo.toString())
+            color_printSuccess "❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤上传成功❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
+            color_printSuccess ""
+            color_printSuccess ""
+            color_printSuccess "     fir下载短链接为：" + buildShortcutUrl
+            color_printSuccess ""
+            color_printSuccess ""
+            color_printSuccess "❤❤❤❤❤❤❤❤❤❤❤❤❤❤信息打印完毕❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
+            openBrowser(buildShortcutUrl)
+        } else {
+            color_printError "apk上传失败"
+        }
+    } catch (Exception e) {
+        color_printError "apk上传失败"
+    }
+}
+def openBrowser(String url){
     //打开短链接
     exec {
         if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
-            commandLine "x-www-browser", buildShortcutUrl
+            commandLine "x-www-browser", url
         } else if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-            commandLine "powershell", "start", buildShortcutUrl
+            commandLine "powershell", "start", url
         } else if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
-            commandLine "open", buildShortcutUrl
+            commandLine "open", url
         }
     }
 }
@@ -698,6 +703,10 @@ def uploadFir(String filePath) {
 def color_print(String value) {
     printf "\033[1;33m❤❤❤%s\033[0m\n", value
 }
-def color_printResult(String value) {
+
+def color_printSuccess(String value) {
     printf "\033[1;32m❤❤❤%s\033[0m\n", value
+}
+def color_printError(String value) {
+    printf "\033[1;31m❤❤❤%s\033[0m\n", value
 }
