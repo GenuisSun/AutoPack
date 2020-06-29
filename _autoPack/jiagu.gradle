@@ -136,7 +136,6 @@ task downloadZipFile(dependsOn: 'assembleRelease') {
         }
     }
     doLast {
-        color_print "开始下载加固压缩包 请稍后。。。"
         //TODO 方法一：使用de.undercouch.download 下载资源
 //        download {
 //            src getJiaGuZipUrlByOs()
@@ -154,7 +153,6 @@ task downloadZipFile(dependsOn: 'assembleRelease') {
             cmd.execute().waitForProcessOutput(System.out, System.err)
         }
         color_print "360加固资源包下载完成 路径在" + jiaguConfig.download_jiagu_zip_path
-        color_print "准备对该资源包进行解压"
         color_print "执行解压任务 ❤unzipFile❤ 请稍后。。。"
     }
 }
@@ -600,7 +598,7 @@ private def uploadPGY(String filePath) {
     color_printSuccess "App版本号：" + parsedJson.data.buildVersionNo
     color_printSuccess "AppBuildVersion：" + parsedJson.data.buildBuildVersion
     color_printSuccess "App包体积：" + parsedJson.data.buildFileSize
-    color_printSuccess "App短链接：" + buildShortcutUrl
+    color_printSuccess "App短链接：" + parsedJson.data.buildShortcutUrl
     color_printSuccess "App下载页地址：https://www.pgyer.com/" + parsedJson.data.buildKey
     color_printSuccess "App二维码地址：" + parsedJson.data.buildQRCodeURL
     color_printSuccess "App上传时间：" + parsedJson.data.buildCreated
