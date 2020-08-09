@@ -60,8 +60,8 @@ android {
      */
     packagingConfig {
         //360加固账号
-        ACCOUNT_360 = this.ACCOUNT_360
-        PASSWORD_360 = this.PASSWORD_360
+        ACCOUNT_360 = _360['account']
+        PASSWORD_360 = _360['password']
         //chanel渠道包生成文件夹命名为当前版本
         CHANEL_VERSION_NAME = VERSION_NAME
         //由于签名位置信息 前台难以保持一致 故不写死，做成可动态传递

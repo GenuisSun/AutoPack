@@ -8,17 +8,26 @@ ext {
     KEY_FILE = properties['KEY_FILE']
     KEY_PASSWORD = properties['KEY_PASSWORD']
 
-    APP_NAME = properties['APP_NAME']
-    FIR_API_TOKEN = properties['FIR_API_TOKEN']
-    FIR_APP_ICON = properties['FIR_APP_ICON']
     //版本号
     VERSION_CODE = properties['VERSION_CODE']
     VERSION_NAME = properties['VERSION_NAME']
-    //360账号密码
-    ACCOUNT_360 = properties['ACCOUNT_360']
-    PASSWORD_360 = properties['PASSWORD_360']
+
+    //360加固账号密码配置
+    _360 = [
+            account   : properties['ACCOUNT_360'],
+            password  : properties['PASSWORD_360']
+    ]
 
     //蒲公英配置
-    pgy = [apiKey   : properties['PGY_APIKEY'],
-           uploadUrl: properties['PGY_UPLOADURL']]
+    pgy = [
+            apiKey   : properties['PGY_APIKEY'],
+            uKey     : properties['PGY_UKEY'],
+            uploadUrl: properties['PGY_UPLOADURL']
+    ]
+    //fir配置
+    fir = [
+            appName   : properties['APP_NAME'],
+            apiToken  : properties['FIR_API_TOKEN'],
+            appIcon   : properties['FIR_APP_ICON']
+    ]
 }

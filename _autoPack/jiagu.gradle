@@ -1,10 +1,8 @@
 import groovy.json.JsonSlurper
 
-
 apply plugin: 'de.undercouch.download'
 /**
- * Author: stc
- * Date:   2020/6/14
+ * @Author: stc @Date: 2020/6/14
  * @email: dearstc@163.com
  *
  * ❤-- 使用360加固版本 3.2.2.3 2020-03-16 --❤
@@ -25,7 +23,7 @@ apply plugin: 'de.undercouch.download'
  * ❤❤❤--  注：❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤
  * ❤❤❤--  最终渠道包路径请查看打包流程日志，写的很清楚了。
  * ❤❤❤--
- * ❤❤❤--TODO  Task:assembleBeta
+ * ❤❤❤--TODO  Task:assembleBetaTo*** / assembleReleaseTo***
  * ❤❤❤--  打包完成上传蒲公英/Fir的Task  依赖于assembleBeta打包
  * ❤❤❤--  assembleBeta打包完成自动上传到蒲公英 输出相关信息  打开短链接
  * ❤❤❤-----------------------------------------------------------------❤❤❤
@@ -44,8 +42,8 @@ def projectPath = getRootDir().getAbsolutePath()
 getRootProject().ext.jiaguConfig = [
 
         //360 账号 (必须)
-        "_360_user_name"         : project.ACCOUNT_360,
-        "_360_user_pw"           : project.PASSWORD_360,
+        "_360_user_name"         : rootProject.ext._360["account"],
+        "_360_user_pw"           : rootProject.ext._360["password"],
 
         //签名文件配置, 使用空字符, 会自动赋值. (可选)
         "keystorePath"           : '',
@@ -104,15 +102,22 @@ getRootProject().ext.jiaguConfig = [
 //❤❤❤❤❤❤start❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤
 /**
  * 把声明的 常用打包任务 都转移到_autoPack分组中
+ * 并为该任务设置依赖clean关系  即每次自动删除build文件夹
  */
 project.afterEvaluate {
     project.android.applicationVariants.all { variant ->
         def pack = 'assemble' + variant.name.capitalize()
         if (null != project.tasks.findByPath(pack) && folder_name != project.tasks.getByName(pack).getGroup()) {
             project.tasks.getByName(pack).setGroup(folder_name)
+            project.tasks.getByName(pack).dependsOn('clean')
         }
     }
 }
+
+// 输出执行任务名 用于调试
+//gradle.taskGraph.beforeTask { Task task ->
+//    println "executing $task ..."
+//}
 //❤❤❤❤❤❤end❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤
 
 
@@ -236,6 +241,7 @@ login.doFirst {
     createFolder(jiaguConfig.zipOutput)
     createFolder(jiaguConfig.jiaguOutput, true)
     createFolder(jiaguConfig.tmpOutput, true)
+    checkZipFolderNum(jiaguConfig.zipOutput)
 }
 
 /**
@@ -245,7 +251,7 @@ login.doFirst {
     project.android.applicationVariants.all { variant ->
         //对应app/build.gradle文件声明 buildTypes 下声明的打包类型
         if (
-        (jiaguConfig.likeApkName == "" && variant.name.toLowerCase().endsWith("release"))
+        (jiaguConfig.likeApkName == "" && variant.name.toLowerCase() == "release")
                 || (jiaguConfig.likeApkName != "" && variant.name.toLowerCase().contains(jiaguConfig.likeApkName))
         ) {
             color_print("初始化相关路径信息  签名信息，当前打包方式：" + variant.name.toLowerCase())
@@ -284,7 +290,7 @@ login.doFirst {
 
                 if (jiaguConfig.zipFileName == '') {
                     jiaguConfig.zipFileName = jiaguConfig.tmpApkName
-                            .substring(0, jiaguConfig.tmpApkName.lastIndexOf('.')) + ".zip"
+                            .substring(0, jiaguConfig.tmpApkName.lastIndexOf('.')) + "_channel.zip"
                     color_print "zip文件名:" + jiaguConfig.zipFileName
                 }
 
@@ -337,11 +343,6 @@ task jiagu360(type: JavaExec, dependsOn: setKeystore) {
     workingDir(jiaguConfig.jiagu_root_path)
     classpath(files(jiaguConfig.jiaguJarPath))
     main('com.qihoo.jiagu.CmdMain')
-    //动态设置args
-//    args('-jiagu',
-//            tmpInputPath + File.separator + tmpInputApkFile,
-//            jiaguOutput,
-//            '-autosign')
 }
 
 
@@ -350,11 +351,8 @@ task jiagu360(type: JavaExec, dependsOn: setKeystore) {
  */
 task copyTmpApk(type: Copy, dependsOn: jiagu360) {
     from(jiaguConfig.jiaguOutput)
-    //include('*_jiagu_sign.apk')
     include('*.apk')
     into(jiaguConfig.tmpOutput)
-    //名余曰正则兮，字余曰灵均, 动态执行
-    //rename('(.+)', tmpApk)
 }
 
 /**
@@ -364,11 +362,6 @@ task walleApk(type: JavaExec, dependsOn: copyTmpApk) {
     workingDir(jiaguConfig.walle_root_path)
     classpath(files(jiaguConfig.walleJarPath))
     main('com.meituan.android.walle.Main')
-    //动态设置args
-//    args('batch', '-f',
-//            baseBuildPath + channelList,
-//            tmpPath + File.separator + tmpApk,
-//            wallePath)
 }
 
 /**
@@ -444,74 +437,10 @@ def getJiaGuZipUrlByOs() {
     return url
 }
 
-/**
- *  ❤-- 此方法暂时废弃
- *  ❤-- 自动读取签名配置信息 因会出现获取不到签名，需手动导入的情况，故每次直接从gradle中声明的位置获取
- *  ❤-- 如果出现,签名配置中没有匹配的签名,请使用命令行的方式单独导入签名信息. --❤
- *  ❤-- java -jar jiagu.jar  -importsign<keystore_path><keystore_password><alias><alias_password> --❤
- *  ❤-- 这有可能是360加固的BUG --❤
- * @return
- */
-def readSigning() {
-    def application = "com.android.application"
-    def applicationPlugin = project.plugins.findPlugin(application)
-    //applicationPlugin.extension
-    //color_print "插件:" + applicationPlugin
-    //color_print applicationPlugin.extension.signingConfigs[0]
-    def signingConfigs = applicationPlugin.extension.signingConfigs
-
-    def signingMap = new HashMap<String, String>()
-
-    if (signingConfigs.size() > 0) {
-        def builder = new StringBuilder()
-        builder.append("找到签名配置" + signingConfigs.size() + "个\n")
-        signingConfigs.each {
-            builder.append("name:")
-            builder.append(it.name)
-            builder.append("\n")
-
-            builder.append("mStoreFile:")
-            builder.append(it.storeFile)
-            builder.append("\n")
-
-            builder.append("mStorePassword:")
-            builder.append(it.storePassword)
-            builder.append("\n")
-
-            builder.append("mKeyAlias:")
-            builder.append(it.keyAlias)
-            builder.append("\n")
-
-            builder.append("mKeyPassword:")
-            builder.append(it.keyPassword)
-            builder.append("\n")
-            builder.append("\n")
-
-            signingMap.put("sf", it.storeFile)
-            signingMap.put("sp", it.storePassword)
-            signingMap.put("kp", it.keyPassword)
-            signingMap.put("ka", it.keyAlias)
-        }
-        color_print builder
-    } else {
-        color_print "未找到签名配置信息"
-    }
-
-    return signingMap
-}
 //❤❤❤❤❤❤end打包流程❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤
 
 
 //❤❤❤❤❤❤start蒲公英/fir❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤
-
-//project.tasks.whenTaskAdded { Task theTask ->
-//    if (theTask.name == 'assembleBeta') {
-//        theTask.doLast {
-////            _uploadApp('beta')
-//        }
-//    }
-//}
-
 
 /**
  * 打测试包并上传到蒲公英
@@ -586,23 +515,25 @@ private def uploadPGY(String filePath) {
     def stdout = new ByteArrayOutputStream()
     exec {
         executable = 'curl'
-        args = ['-F', "file=@${filePath}", '-F', "_api_key=${rootProject.ext.pgy["apiKey"]}", rootProject.ext.pgy["uploadUrl"]]
+        args = ['-F', "file=@${filePath}",
+                '-F', "uKey=${rootProject.ext.pgy["uKey"]}",
+                '-F', "_api_key=${rootProject.ext.pgy["apiKey"]}",
+                rootProject.ext.pgy["uploadUrl"]]
         standardOutput = stdout
     }
     String output = stdout.toString()
-    color_print(output)
+//    color_print(output)
     def parsedJson = new JsonSlurper().parseText(output)
-    color_printSuccess "❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤上传成功❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
-    color_printSuccess "App的名称：" + parsedJson.data.buildFileName
-    color_printSuccess "App版本号：" + parsedJson.data.buildVersion
+    color_printSuccess "👙👙👙👙👙👙👙👙👙👙👙👙👙👙👙👙上传成功👙👙👙👙👙👙👙👙👙👙👙👙👙👙👙👙"
+    color_printSuccess "App的安装包名称：" + parsedJson.data.buildFileName
+    color_printSuccess "App版本名称：" + parsedJson.data.buildVersion
     color_printSuccess "App版本号：" + parsedJson.data.buildVersionNo
     color_printSuccess "AppBuildVersion：" + parsedJson.data.buildBuildVersion
     color_printSuccess "App包体积：" + parsedJson.data.buildFileSize
-    color_printSuccess "App短链接：" + parsedJson.data.buildShortcutUrl
-    color_printSuccess "App下载页地址：https://www.pgyer.com/" + parsedJson.data.buildKey
-    color_printSuccess "App二维码地址：" + parsedJson.data.buildQRCodeURL
+    color_printSuccess "App下载页地址：https://www.pgyer.com/" + parsedJson.data.buildShortcutUrl
+//    color_printSuccess "App二维码地址：" + parsedJson.data.buildQRCodeURL
     color_printSuccess "App上传时间：" + parsedJson.data.buildCreated
-    color_printSuccess "❤❤❤❤❤❤❤❤❤❤❤❤❤❤信息打印完毕❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
+    color_printSuccess "👙👙👙👙👙👙👙👙👙👙👙👙👙👙👙👙信息打印完毕👙👙👙👙👙👙👙👙👙👙👙👙👙👙👙👙"
     openBrowser("https://www.pgyer.com/" + parsedJson.data.buildShortcutUrl)
 }
 
@@ -614,7 +545,7 @@ private def uploadPGY(String filePath) {
  */
 def uploadFir(String filePath) {
     //fir api_token
-    def FIR_API_TOKEN = project.FIR_API_TOKEN
+    def FIR_API_TOKEN = rootProject.ext.fir["apiToken"]
     //packageName fir上应用的包名
     def packageName = project.android.defaultConfig.applicationId
     //获取fir上传凭证的各个字段
@@ -628,21 +559,21 @@ def uploadFir(String filePath) {
     //应用id 用来修改应用信息
     def id = appInfoBean["id"]
 
-    File file = file(project.FIR_APP_ICON)
-    if(file.exists()){
+    File file = file(rootProject.ext.fir["appIcon"])
+    if (file.exists()) {
         //上传应用icon
         def uploadIcon = new ByteArrayOutputStream()
         exec {
             executable = 'curl'
-            args = ['-F', "file=@${project.FIR_APP_ICON}",
+            args = ['-F', "file=@${rootProject.ext.fir["appIcon"]}",
                     '-F', "token=${appInfoBean["cert"]["icon"]["token"]}",
                     '-F', "key=${appInfoBean["cert"]["icon"]["key"]}",
                     appInfoBean["cert"]["icon"]["upload_url"]]
             standardOutput = uploadIcon
         }
         color_print("应用icon上传结果(无影响，非必要)：" + uploadIcon.toString())
-    }else{
-        color_printError("应用icon文件不存在(无影响，非必要)：若需要，请检查全局变量FIR_APP_ICON设置的路径图片是否存在")
+    } else {
+        color_printError("应用icon文件不存在(无影响，非必要)：若需要，请检查全局变量fir的appIcon设置的路径图片是否存在")
     }
 
     //上传apk文件
@@ -659,16 +590,16 @@ def uploadFir(String filePath) {
         def uploadResult = new JsonSlurper().parseText(upload)
         if (uploadResult.is_completed) {
             //修改app应用名称 如果在直接上传里面设置appname会中文乱码，故需要重新走一下修改信息  官方未解释原因
-            def appName = URLEncoder.encode(project.APP_NAME)
+            def appName = URLEncoder.encode(rootProject.ext.fir["appName"])
             def updateInfo = ("curl -X PUT -d name=$appName -d api_token=$FIR_API_TOKEN http://api.bq04.com/apps/$id").execute().text
 //            color_print(updateInfo.toString())
-            color_printSuccess "❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤上传成功❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
+            color_printSuccess "👙👙👙👙👙👙👙👙👙👙👙👙👙👙👙👙上传成功👙👙👙👙👙👙👙👙👙👙👙👙👙👙👙👙"
             color_printSuccess ""
             color_printSuccess ""
             color_printSuccess "     fir下载短链接为：" + buildShortcutUrl
             color_printSuccess ""
             color_printSuccess ""
-            color_printSuccess "❤❤❤❤❤❤❤❤❤❤❤❤❤❤信息打印完毕❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤❤ "
+            color_printSuccess "👙👙👙👙👙👙👙👙👙👙👙👙👙👙👙👙信息打印完毕👙👙👙👙👙👙👙👙👙👙👙👙👙👙👙👙"
             openBrowser(buildShortcutUrl)
         } else {
             color_printError "apk上传失败"
@@ -677,7 +608,8 @@ def uploadFir(String filePath) {
         color_printError "apk上传失败"
     }
 }
-def openBrowser(String url){
+
+def openBrowser(String url) {
     //打开短链接
     exec {
         if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
@@ -699,12 +631,78 @@ def openBrowser(String url){
  * @return
  */
 def color_print(String value) {
-    printf "\033[1;33m❤❤❤%s\033[0m\n", value
+    printf "\033[1;33m🚶🏃🚶🏃🚶🏃🚶🏃\t%s\033[0m\n", value
 }
 
 def color_printSuccess(String value) {
-    printf "\033[1;32m❤❤❤%s\033[0m\n", value
+    printf "\033[1;32m👙👙👙👙\t%s\033[0m\n", value
 }
+
 def color_printError(String value) {
-    printf "\033[1;31m❤❤❤%s\033[0m\n", value
+    printf "\033[1;31m💀💀💀💀\t%s\033[0m\n", value
+}
+
+/**
+ * 检测渠道zip文件夹下压缩包数量，避免过多本地存储
+ * 目前设置最多存储五次渠道包历史
+ * @param path
+ */
+def checkZipFolderNum(def path) {
+    //文件路径
+    List<File> list = getFileSort(path)
+    for (int i = 0; i < list.size(); i++) {
+        if (i >= 5) {
+            color_print "删除历史渠道zip包:" + list.get(i).getName() + " " + list.get(i).delete()
+        }
+    }
+}
+/**
+ * 获取目录下所有文件(按时间排序)
+ *
+ * @param path
+ * @return
+ */
+def getFileSort(String path) {
+
+    List<File> list = getFiles(path, new ArrayList<File>())
+
+    if (list != null && list.size() > 0) {
+
+        Collections.sort(list, new Comparator<File>() {
+            @Override
+            int compare(File file, File newFile) {
+                if (file.lastModified() < newFile.lastModified()) {
+                    return 1
+                } else if (file.lastModified() == newFile.lastModified()) {
+                    return 0
+                } else {
+                    return -1
+                }
+            }
+        })
+    }
+
+    return list
+}
+/**
+ *
+ * 获取目录下所有文件
+ *
+ * @param realpath
+ * @param files
+ * @return
+ */
+def getFiles(String realpath, List<File> files) {
+    File realFile = new File(realpath)
+    if (realFile.isDirectory()) {
+        File[] subfiles = realFile.listFiles()
+        for (File file : subfiles) {
+            if (file.isDirectory()) {
+                getFiles(file.getAbsolutePath(), files)
+            } else {
+                files.add(file)
+            }
+        }
+    }
+    return files
 }
